@@ -1,0 +1,48 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "verdict-row-inspector"
+version = "0.1.0"
+description = "Inspector SDK for the Verdict Row x402 fleet: a Python client for StallRow's inspector surface (Recheck, Sign Reader, Score Book, Guard, Inspector Physical, packs, Fleet Pass, the hash-chained change feed, watches and signed webhooks) and RouteVerdict, with x402 payment handling and a per-route spend guard built in."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Ren, Verdict Row Patrol", email = "patrol@verdictrow.com" },
+]
+maintainers = [
+    { name = "Ren, Verdict Row Patrol", email = "patrol@verdictrow.com" },
+]
+keywords = ["x402", "agents", "payments", "usdc", "base", "inspector", "verdict-row", "stall-row"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Libraries",
+]
+dependencies = [
+    # The same x402 SDK the fleet's own services run (stall-row pins
+    # x402==2.25.0): payment is the SDK's ExactEvmScheme (EIP-3009
+    # exact scheme on Base), never hand-rolled signing in this package.
+    "x402[httpx,evm]>=2.25,<3",
+    "httpx>=0.27",
+    "eth-account>=0.13",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.urls]
+Homepage = "https://github.com/QuincyGB/verdict-row-inspector"
+Repository = "https://github.com/QuincyGB/verdict-row-inspector"
+Issues = "https://github.com/QuincyGB/verdict-row-inspector/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/verdict_row_inspector"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
