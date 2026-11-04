@@ -116,6 +116,26 @@ ok = verify_webhook_signature(HOOK_SECRET, raw_body_bytes,
 An exhausted pack returns 402 — there is never a silent per-call
 fallback.
 
+## Function-calling schema pack
+
+Drop-in LLM tool definitions for every fleet route priced $0.05 or
+less (24 tools), in OpenAI and Anthropic formats — generated from
+the fleet's canonical route registry, and also served at
+https://verdictrow.com/function-tools.json:
+
+```python
+from verdict_row_inspector import OPENAI_TOOLS, ANTHROPIC_TOOLS, get_function_tool
+
+# OpenAI: pass OPENAI_TOOLS as the `tools` argument.
+# Anthropic: pass ANTHROPIC_TOOLS as the `tools` argument.
+tool = get_function_tool("stall_row_recheck", "openai")
+```
+
+Each tool is a paid POST endpoint on the x402 exact scheme (USDC on
+Base): an unpaid call returns HTTP 402 with the payment challenge.
+The definitions describe the tools; the payment leg is your x402
+client's.
+
 ## Routes and prices
 
 Verified against the live `/.well-known/x402` discovery documents of

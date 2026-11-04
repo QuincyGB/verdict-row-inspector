@@ -63,3 +63,14 @@ export {
     computeWebhookSignature,
     verifyWebhookSignature,
 } from "./webhooks";
+export {
+    ANTHROPIC_TOOLS,
+    FUNCTION_TOOLS_PACK,
+    FUNCTION_TOOL_ROUTES,
+    OPENAI_TOOLS,
+    getFunctionTool,
+    type AnthropicTool,
+    type FunctionToolRoute,
+    type FunctionToolsPack,
+    type OpenAIFunctionTool,
+} from "./function-tools";

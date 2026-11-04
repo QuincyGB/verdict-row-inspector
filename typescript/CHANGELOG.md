@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.0 — 2026-11-04
+
+- Function-calling schema pack: `FUNCTION_TOOLS_PACK`, `OPENAI_TOOLS`,
+  `ANTHROPIC_TOOLS`, `FUNCTION_TOOL_ROUTES` and the typed
+  `getFunctionTool(name, format)` helper — drop-in LLM tool
+  definitions for every fleet route priced $0.05 or less (24 tools),
+  generated from the fleet's canonical route registry by the
+  fleet-checker's function_tools.py and also served at
+  https://verdictrow.com/function-tools.json. New offline tests
+  validate the pack against its embedded registry snapshot (unique
+  names, prices in every description matching the snapshot, both
+  formats carrying identical schemas).
+
 ## 0.1.0 — 2026-10-31
 
 First local build (not yet published to npm).
