@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.4.0 — 2026-11-04
+
+- Fleet Check helper (Next-20 Item 13, Fleet Check Framework Packs):
+  `InspectorClient.buyFleetCheckPack()` ($5.00 — 100 sweeps of one
+  fixed fleet definition, 90-day expiry), `fleetCheckSweep()`
+  ($0.10 single sweep), `runFleetCheckSweep(packId)` (one pack
+  credit, no x402 payment) and `fleetCheckStatus(packId)` (free).
+  Fleet Check prices join `ROUTE_PRICES`, so the per-route spend
+  guard caps pack purchases at exactly $5.00. Every Fleet Check
+  delivery carries the service's `framework_log` run-log entries;
+  the exported `frameworkLogEntries(delivery)` /
+  `frameworkLogLines(delivery)` helpers return them as structured
+  entries or one-line strings a framework runner can log.
+- Tests: 31 passing (7 new Fleet Check tests: price pins, mocked
+  $5.00 pack purchase, $0.10 sweep, pack-credit run, free status,
+  over-price challenge refused by the spend guard, log-helper
+  tolerance). All offline, $0 spent.
+- npm: prepared-only — the stored credential still returns 401 on
+  whoami (confirmed repeatedly on 2026-11-04), so 0.4.0 is packed
+  as a tarball and NOT published; publishing unblocks when the
+  credential is fixed.
+
 ## 0.3.0 — 2026-11-04
 
 - LangChain JS tools at the new `./langchain` entry point

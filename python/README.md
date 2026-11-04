@@ -116,6 +116,27 @@ ok = verify_webhook_signature(HOOK_SECRET, raw_body_bytes,
 An exhausted pack returns 402 — there is never a silent per-call
 fallback.
 
+## Fleet Check (Framework Pack)
+
+Whole-fleet health sweeps, packaged for framework runners:
+
+```python
+fc = await client.buy_fleet_check_pack(origins=["https://stall.example.com"])  # $5.00, 100 sweeps / 90d
+run = await client.run_fleet_check_sweep(fc["pack_id"])     # one pack credit
+status = await client.fleet_check_status(fc["pack_id"])     # free
+once = await client.fleet_check_sweep(resources=[url])      # $0.10 single sweep
+
+from verdict_row_inspector import framework_log_lines
+for line in framework_log_lines(run):   # framework run-log lines
+    print(line)
+```
+
+Every Fleet Check delivery carries `framework_log` entries (tool,
+resource, verdict OK/DEGRADED/DOWN, defect, one-line message);
+`framework_log_entries()` returns them structured. Pack deliveries
+also carry `renewal` terms. Descriptor:
+https://verdictrow.com/fleet-check-framework-pack.json
+
 ## Function-calling schema pack
 
 Drop-in LLM tool definitions for every fleet route priced $0.05 or

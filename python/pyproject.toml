@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "verdict-row-inspector"
-version = "0.2.0"
+version = "0.3.0"
 description = "Inspector SDK for the Verdict Row x402 fleet: a Python client for StallRow's inspector surface (Recheck, Sign Reader, Score Book, Guard, Inspector Physical, packs, Fleet Pass, the hash-chained change feed, watches and signed webhooks) and RouteVerdict, with x402 payment handling and a per-route spend guard built in."
 readme = "README.md"
 requires-python = ">=3.10"

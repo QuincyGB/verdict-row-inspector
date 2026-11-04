@@ -74,6 +74,8 @@ export const ROUTE_PRICES: Record<string, number> = {
     "/v1/toolkit/pack": 1_000_000,
     "/v1/fleet-pass": 5_000_000,
     "/v1/fleet-pass-20": 20_000_000,
+    "/v1/fleet-check": 100_000,
+    "/v1/fleet-check/pack": 5_000_000,
 };
 
 export const ROUTE_VERDICT_PRICES: Record<string, number> = {
@@ -149,6 +151,74 @@ export interface BatchRecheckResponse extends Record<string, unknown> {
 export interface VerdictReadResponse extends Record<string, unknown> {
     found?: boolean;
     url?: string;
+}
+
+/** One framework run-log entry from a Fleet Check delivery
+ * (Next-20 Item 13): a single route's verdict expressed so an
+ * AgentKit / LangChain-style runner can drop it into its run log. */
+export interface FrameworkLogEntry {
+    tool: string;
+    action: string;
+    resource: string;
+    verdict: string; // OK | DEGRADED | DOWN
+    defect: string | null;
+    defects: string[];
+    http_status?: number | null;
+    message: string;
+    checked_at?: string;
+}
+
+export interface FleetCheckRenewal extends Record<string, unknown> {
+    renewal_cycle_days?: number;
+    renewal_price_units?: number;
+    renewal_price_usd?: string;
+    credits_per_pack?: number;
+    days_remaining?: number;
+    expires_at?: string;
+}
+
+export interface FleetCheckPackResponse extends Record<string, unknown> {
+    pack_id?: string;
+    credits_total?: number;
+    credits_remaining?: number;
+    renewal?: FleetCheckRenewal;
+}
+
+export interface FleetCheckSweepResponse extends Record<string, unknown> {
+    summary?: Record<string, unknown>;
+    framework_log?: FrameworkLogEntry[];
+}
+
+export interface FleetCheckRunResponse extends Record<string, unknown> {
+    pack_id?: string;
+    status?: string;
+    credits_remaining?: number;
+    framework_log?: FrameworkLogEntry[];
+    renewal?: FleetCheckRenewal;
+}
+
+export interface FleetCheckStatusResponse extends Record<string, unknown> {
+    pack_id?: string;
+    credits_remaining?: number;
+    framework_log?: FrameworkLogEntry[];
+    renewal?: FleetCheckRenewal;
+    latest_run?: Record<string, unknown> | null;
+}
+
+/** The framework_log entries of any Fleet Check delivery, as an
+ * array of structured entries a framework runner can log as-is. */
+export function frameworkLogEntries(
+    delivery: { framework_log?: FrameworkLogEntry[] } | null | undefined,
+): FrameworkLogEntry[] {
+    return delivery?.framework_log ?? [];
+}
+
+/** The framework_log entries of any Fleet Check delivery, as an
+ * array of one-line strings for plain-text run logs. */
+export function frameworkLogLines(
+    delivery: { framework_log?: FrameworkLogEntry[] } | null | undefined,
+): string[] {
+    return frameworkLogEntries(delivery).map((entry) => entry.message);
 }
 
 export interface WatchRegisterResponse extends Record<string, unknown> {
@@ -429,6 +499,70 @@ export class InspectorClient {
         return this.post(this.stallRowUrl, path, {}, {
             knownPrice: ROUTE_PRICES[path],
         });
+    }
+
+    // -- Fleet Check (Framework Pack, Item 13) -----------------------------------
+    // The pack product on StallRow: buy once ($5.00, 100 sweeps of
+    // ONE fixed fleet definition, 90-day expiry), then sweep on
+    // your own clock — one pack credit per run, status free. Every
+    // delivery carries `framework_log` entries (see
+    // frameworkLogEntries / frameworkLogLines) and pack deliveries
+    // carry `renewal` terms derived server-side from the pack
+    // constants.
+
+    async buyFleetCheckPack(
+        definition: {
+            resources?: string[];
+            origins?: string[];
+            webhookUrl?: string;
+            email?: string;
+            heartbeat?: boolean;
+            intervalS?: number;
+        } = {},
+    ): Promise<FleetCheckPackResponse> {
+        const body: Record<string, unknown> = {};
+        if (definition.resources) body.resources = definition.resources;
+        if (definition.origins) body.origins = definition.origins;
+        if (definition.webhookUrl) body.webhook_url = definition.webhookUrl;
+        if (definition.email) body.email = definition.email;
+        if (definition.heartbeat !== undefined) body.heartbeat = definition.heartbeat;
+        if (definition.intervalS !== undefined) body.interval_s = definition.intervalS;
+        return this.post(this.stallRowUrl, "/v1/fleet-check/pack", body, {
+            knownPrice: ROUTE_PRICES["/v1/fleet-check/pack"],
+        });
+    }
+
+    async fleetCheckSweep(
+        definition: { resources?: string[]; origins?: string[] } = {},
+    ): Promise<FleetCheckSweepResponse> {
+        const body: Record<string, unknown> = {};
+        if (definition.resources) body.resources = definition.resources;
+        if (definition.origins) body.origins = definition.origins;
+        return this.post(this.stallRowUrl, "/v1/fleet-check", body, {
+            knownPrice: ROUTE_PRICES["/v1/fleet-check"],
+        });
+    }
+
+    /** Run one sweep of the pack's fixed fleet, spending ONE pack
+     * credit — a funded call: no x402 payment is made or attempted. */
+    async runFleetCheckSweep(packId: string): Promise<FleetCheckRunResponse> {
+        return this.post(
+            this.stallRowUrl,
+            "/v1/fleet-check/run",
+            { pack_id: packId },
+            { knownPrice: null, funded: true },
+        );
+    }
+
+    /** Free pack status: definition, credits, renewal terms, the
+     * latest sweep table and its framework_log entries. */
+    async fleetCheckStatus(packId: string): Promise<FleetCheckStatusResponse> {
+        return this.post(
+            this.stallRowUrl,
+            "/v1/fleet-check/status",
+            { pack_id: packId },
+            { knownPrice: null },
+        );
     }
 
     // -- Fleet-Pass-funded batch -------------------------------------------------

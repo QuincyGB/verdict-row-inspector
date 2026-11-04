@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.3.0 — 2026-11-04
+
+- Fleet Check helper (Next-20 Item 13, Fleet Check Framework Packs):
+  `buy_fleet_check_pack()` ($5.00 — 100 sweeps of one fixed fleet
+  definition, 90-day expiry), `fleet_check_sweep()` ($0.10 single
+  sweep), `run_fleet_check_sweep(pack_id)` (one pack credit, no
+  x402 payment) and `fleet_check_status(pack_id)` (free). Fleet
+  Check prices join `ROUTE_PRICES`, so the per-route spend guard
+  caps pack purchases at exactly $5.00. Module-level
+  `framework_log_entries(delivery)` / `framework_log_lines(delivery)`
+  helpers return a delivery's framework_log entries as structured
+  entries or one-line strings a framework runner can log.
+- Tests: 27 passing (7 new Fleet Check tests, all mocked, $0 spent).
+- PyPI: NOT published — publishing is a gated hand-step, untouched;
+  the wheel is built locally only.
+
 ## 0.2.0 — 2026-11-04
 
 - Function-calling schema pack: `FUNCTION_TOOLS_PACK`, `OPENAI_TOOLS`,

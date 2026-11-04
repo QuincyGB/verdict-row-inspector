@@ -108,6 +108,26 @@ Webhook deliveries arrive with `X-Recheck-Signature: sha256=<hex>`
 `verifyWebhookSignature(secret, rawBody, header)` from this package
 (node:crypto, constant-time compare).
 
+## Fleet Check (Framework Pack)
+
+Whole-fleet health sweeps, packaged for framework runners:
+
+```ts
+const fc = await client.buyFleetCheckPack({ origins: ["https://stall.example.com"] }); // $5.00, 100 sweeps / 90d
+const run = await client.runFleetCheckSweep(fc.pack_id!);   // one pack credit
+const status = await client.fleetCheckStatus(fc.pack_id!);  // free
+const once = await client.fleetCheckSweep({ resources: [url] }); // $0.10 single sweep
+
+import { frameworkLogLines } from "@quincygb/verdict-row-inspector";
+for (const line of frameworkLogLines(run)) console.log(line); // framework run-log lines
+```
+
+Every Fleet Check delivery carries `framework_log` entries (tool,
+resource, verdict OK/DEGRADED/DOWN, defect, one-line message);
+`frameworkLogEntries()` returns them structured. Pack deliveries
+also carry `renewal` terms. Descriptor:
+https://verdictrow.com/fleet-check-framework-pack.json
+
 An exhausted pack returns 402 — there is never a silent per-call
 fallback.
 

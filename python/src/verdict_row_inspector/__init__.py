@@ -19,6 +19,8 @@ from .client import (
     ROUTE_VERDICT_PRICES,
     USDC_ASSET,
     InspectorClient,
+    framework_log_entries,
+    framework_log_lines,
     load_account_from_env,
     parse_payment_required,
 )
@@ -43,7 +45,7 @@ from .webhooks import (
     verify_signature as verify_webhook_signature,
 )
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 __all__ = [
     "ANTHROPIC_TOOLS",
@@ -68,6 +70,8 @@ __all__ = [
     "__version__",
     "chain_hash",
     "compute_webhook_signature",
+    "framework_log_entries",
+    "framework_log_lines",
     "get_function_tool",
     "load_account_from_env",
     "parse_payment_required",

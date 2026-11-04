@@ -82,7 +82,24 @@ ROUTE_PRICES: dict[str, int] = {
     "/v1/toolkit/pack": 1_000_000,     # $1.00 — sign-read/score-book/guard credits
     "/v1/fleet-pass": 5_000_000,       # $5.00
     "/v1/fleet-pass-20": 20_000_000,   # $20.00
+    "/v1/fleet-check": 100_000,        # $0.10 — one whole-fleet sweep
+    "/v1/fleet-check/pack": 5_000_000,  # $5.00 — 100 sweeps, one fleet, 90d
 }
+
+
+def framework_log_entries(delivery: dict | None) -> list[dict]:
+    """The framework_log entries of any Fleet Check delivery, as a
+    list of structured entries a framework runner can log as-is
+    (Next-20 Item 13: Fleet Check Framework Packs)."""
+    if not isinstance(delivery, dict):
+        return []
+    return list(delivery.get("framework_log") or [])
+
+
+def framework_log_lines(delivery: dict | None) -> list[str]:
+    """The framework_log entries of any Fleet Check delivery, as a
+    list of one-line strings for plain-text run logs."""
+    return [str(entry.get("message", "")) for entry in framework_log_entries(delivery)]
 ROUTE_VERDICT_PRICES: dict[str, int] = {
     "/v1/check": 50_000,           # $0.05
 }
@@ -423,6 +440,71 @@ class InspectorClient:
             raise ValueError(f"unknown fleet pass tier {tier!r} — use 5 or 20")
         return await self._post(
             self.stall_row_url, path, {}, known_price=ROUTE_PRICES[path],
+        )
+
+    # -- Fleet Check (Framework Pack, Item 13) -----------------------------------
+
+    async def buy_fleet_check_pack(
+        self,
+        resources: list[str] | None = None,
+        origins: list[str] | None = None,
+        webhook_url: str | None = None,
+        email: str | None = None,
+        heartbeat: bool | None = None,
+        interval_s: int | None = None,
+    ) -> dict:
+        """POST /v1/fleet-check/pack ($5.00): mint 100 sweep credits
+        bound to ONE fixed fleet definition (resources and/or
+        origins) for 90 days. The delivery carries `renewal` terms
+        derived server-side from the pack constants."""
+        body: dict[str, Any] = {}
+        for key, value in (
+            ("resources", resources), ("origins", origins),
+            ("webhook_url", webhook_url), ("email", email),
+            ("heartbeat", heartbeat), ("interval_s", interval_s),
+        ):
+            if value is not None:
+                body[key] = value
+        return await self._post(
+            self.stall_row_url, "/v1/fleet-check/pack", body,
+            known_price=ROUTE_PRICES["/v1/fleet-check/pack"],
+        )
+
+    async def fleet_check_sweep(
+        self,
+        resources: list[str] | None = None,
+        origins: list[str] | None = None,
+    ) -> dict:
+        """POST /v1/fleet-check ($0.10): one sweep of a caller-named
+        fleet; the delivery carries `framework_log` run-log entries
+        (see framework_log_entries / framework_log_lines)."""
+        body: dict[str, Any] = {}
+        if resources is not None:
+            body["resources"] = resources
+        if origins is not None:
+            body["origins"] = origins
+        return await self._post(
+            self.stall_row_url, "/v1/fleet-check", body,
+            known_price=ROUTE_PRICES["/v1/fleet-check"],
+        )
+
+    async def run_fleet_check_sweep(self, pack_id: str) -> dict:
+        """POST /v1/fleet-check/run: run one sweep of the pack's
+        fixed fleet, spending ONE pack credit — a funded call, no
+        x402 payment is made or attempted. The delivery carries
+        framework_log entries, the run diff and renewal terms."""
+        return await self._post(
+            self.stall_row_url, "/v1/fleet-check/run", {"pack_id": pack_id},
+            known_price=None, funded=True,
+        )
+
+    async def fleet_check_status(self, pack_id: str) -> dict:
+        """POST /v1/fleet-check/status (free): definition, credits,
+        renewal terms, the latest sweep table and its framework_log
+        entries for one Fleet Check pack."""
+        return await self._post(
+            self.stall_row_url, "/v1/fleet-check/status", {"pack_id": pack_id},
+            known_price=None,
         )
 
     # -- Fleet-Pass-funded batch -------------------------------------------------
