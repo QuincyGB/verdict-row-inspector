@@ -54,6 +54,8 @@ import {
 export const DEFAULT_STALL_ROW_URL = "https://stall-row-production.up.railway.app";
 export const DEFAULT_ROUTE_VERDICT_URL =
     "https://route-verdict-production.up.railway.app";
+export const DEFAULT_TOKEN_VERDICT_URL =
+    "https://token-verdict-production.up.railway.app";
 
 export const BASE_NETWORK = "eip155:8453";
 export const USDC_ASSET = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
@@ -164,6 +166,7 @@ export interface InspectorClientOptions {
     signer?: ClientEvmSigner;
     stallRowUrl?: string;
     routeVerdictUrl?: string;
+    tokenVerdictUrl?: string;
     /** Caller ceiling in micro-USDC; can only lower a route's cap. */
     maxAmountUnits?: number;
     /** fetch implementation used for EVERY request (inject a fake in
@@ -178,9 +181,20 @@ interface PaymentRequirementShape {
     [key: string]: unknown;
 }
 
+/** The route reference a pack dispatch needs — structurally the
+ * pack's FunctionToolRoute (function-tools.ts); declared here so the
+ * client does not import the pack module. */
+export interface PackRouteRef {
+    name: string;
+    stall: string;
+    path: string;
+    amount_units_base: string;
+}
+
 export class InspectorClient {
     readonly stallRowUrl: string;
     readonly routeVerdictUrl: string;
+    readonly tokenVerdictUrl: string;
     readonly maxAmountUnits: number | null;
     feedCursor: FeedCursor = { seq: 0, lastHash: null };
     lastReceipt: Record<string, unknown> | null = null;
@@ -194,6 +208,9 @@ export class InspectorClient {
         this.stallRowUrl = (options.stallRowUrl ?? DEFAULT_STALL_ROW_URL).replace(/\/$/, "");
         this.routeVerdictUrl = (
             options.routeVerdictUrl ?? DEFAULT_ROUTE_VERDICT_URL
+        ).replace(/\/$/, "");
+        this.tokenVerdictUrl = (
+            options.tokenVerdictUrl ?? DEFAULT_TOKEN_VERDICT_URL
         ).replace(/\/$/, "");
         this.maxAmountUnits = options.maxAmountUnits ?? null;
         this.rawFetch = options.fetchImpl ?? globalThis.fetch;
@@ -608,6 +625,33 @@ export class InspectorClient {
             { secret, sub_id: subId },
             { knownPrice: null },
         );
+    }
+
+    // -- generic pack dispatch (the framework wrappers' paid leg) ---------------
+
+    /** Call any Item-4 pack route by its pack route entry, through
+     * this client's x402 payment stack and per-route spend guard
+     * (the cap is the pack's own price). `undefined` args are dropped
+     * from the wire body. This is the single paid leg the LangChain
+     * tools (langchain.ts) invoke; the hand-written methods above
+     * stay the typed surface for the inspector routes. */
+    async callPackRoute(
+        route: PackRouteRef,
+        args: Record<string, unknown> = {},
+    ): Promise<Record<string, unknown>> {
+        const baseUrl =
+            route.stall === "route-verdict"
+                ? this.routeVerdictUrl
+                : route.stall === "token-verdict"
+                  ? this.tokenVerdictUrl
+                  : this.stallRowUrl;
+        const body: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(args)) {
+            if (value !== undefined) body[key] = value;
+        }
+        return this.post(baseUrl, route.path, body, {
+            knownPrice: Number(route.amount_units_base),
+        });
     }
 }
 

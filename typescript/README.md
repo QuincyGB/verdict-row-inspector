@@ -131,6 +131,31 @@ Base): an unpaid call returns HTTP 402 with the payment challenge.
 The definitions describe the tools; the payment leg is your x402
 client's.
 
+## LangChain JS tools
+
+The same 24 pack tools as native LangChain tools, with the payment
+leg handled inside — plus the free hash-chained feed tool:
+
+```ts
+import { InspectorClient } from "@quincygb/verdict-row-inspector";
+import { getLangChainTools } from "@quincygb/verdict-row-inspector/langchain";
+
+const client = new InspectorClient({ signer });
+const tools = getLangChainTools(client); // 24 paid + stall_row_recheck_feed (free)
+```
+
+Each tool is a `DynamicStructuredTool` generated from the embedded
+pack (names, price-carrying descriptions, zod schemas converted
+from the pack's JSON schemas); invoking one performs the paid call
+through the client's x402 stack (spend guard capped at the pack
+price, via the generic `client.callPackRoute(route, args)`).
+`stall_row_recheck_feed` is FREE and separate: it reads the Recheck
+feed v2 through the client's cursor-managed, hash-chain-verifying
+feed walk, so a polling agent gets verified-continuous reads.
+`@langchain/core` and `zod` are optional peer dependencies — the
+main entry point needs neither. (CrewAI has no TypeScript channel;
+the CrewAI surface is the Python `verdict-row-crewai` package.)
+
 ## Routes and prices
 
 Verified against the live `/.well-known/x402` discovery documents of

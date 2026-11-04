@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.3.0 — 2026-11-04
+
+- LangChain JS tools at the new `./langchain` entry point
+  (`@quincygb/verdict-row-inspector/langchain`): `getLangChainTools(client)`
+  returns one `DynamicStructuredTool` per Item-4 pack tool — the 24
+  fleet routes priced $0.05 or less, generated from the embedded pack
+  (names, price-carrying descriptions and zod schemas converted from
+  the pack's own JSON schemas) — whose invoke performs the paid call
+  through the client's existing x402 payment stack via the new
+  `InspectorClient.callPackRoute(route, args)` (per-route spend guard
+  capped at the pack price). Plus `stall_row_recheck_feed`, a FREE
+  tool that reads the Recheck feed v2 through the client's
+  cursor-managed, hash-chain-verifying feed walk. `@langchain/core`
+  and `zod` are optional peer dependencies; the main entry imports
+  neither. CrewAI has no TypeScript channel — the CrewAI surface is
+  the Python `verdict-row-crewai` package (verdict-row-adapters repo).
+- Client: `tokenVerdictUrl` option + `DEFAULT_TOKEN_VERDICT_URL`
+  (the pack's Token Verdict routes previously had no client home).
+- Tests: 24 passing (6 new LangChain tests: inventory pinned to the
+  pack, schema fidelity, mocked paid invokes on two stalls, feed
+  cursor walk + tampered-chain rejection). All offline, $0 spent.
+- npm: prepared-only — the stored credential still returns 401 on
+  whoami (checked 2026-11-04), so 0.3.0 is packed as a tarball and
+  NOT published; publishing unblocks when the credential is fixed.
+
 ## 0.2.0 — 2026-11-04
 
 - Function-calling schema pack: `FUNCTION_TOOLS_PACK`, `OPENAI_TOOLS`,
